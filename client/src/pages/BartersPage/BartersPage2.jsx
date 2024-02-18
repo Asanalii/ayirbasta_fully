@@ -1,0 +1,230 @@
+import React from "react";
+
+import BarterMenu from "components/BarterMenu";
+import Header from "components/Header";
+
+import profileImage from "../../assets/img/Profill.png";
+import productImage from "../../assets/img/image.png";
+import swapIcon from "../../assets/img/swapBarter.svg";
+import BartersPageStyled from "./BartersPage.styled";
+import card from "../../assets/img/shoppingCartBig.svg";
+
+import { useEffect } from "react";
+import apiClient from "api/apiClient";
+import { useState } from "react";
+import { useContext } from "react";
+import { AuthContext } from "context/AuthContext";
+import MyBarter from "components/Barter";
+import { Link, useNavigate } from "react-router-dom";
+import SecondBarter from "components/SecondBarter";
+
+function BartersPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const { contextData } = useContext(AuthContext);
+  const [tradesFromMe, setTradesFromMe] = useState([]);
+  const [trades, SetTrades] = useState([]);
+  const [tradesToMe, setTradesToMe] = useState([]);
+  const [barters, setBarters] = useState([]);
+
+  const [myBarters, setMyBarters] = useState([]);
+  const [toMeBarters, setToMeBarters] = useState({});
+  const [checkTrades, setCheckTrades] = useState(false);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    apiClient
+      .get("/v1/user/trades", {
+        headers: {
+          Authorization: `Bearer ${contextData.token.access}`,
+        },
+      })
+      .then(({ data }) => {
+        var fromMe = [];
+        var toMe = new Array();
+
+        SetTrades(data.trade);
+        if (data.trade != null) {
+          for (let index = 0; index < data.trade.length; index++) {
+            fromMe.push(data.trade[index].giver + `${data.trade[index]._id}`);
+            toMe.push(data.trade[index].receiver);
+          }
+        }
+
+        setTradesFromMe(fromMe);
+        setTradesToMe(toMe);
+
+        setIsLoading(false);
+      });
+  }, []);
+
+  return (
+    !isLoading && (
+      <div>
+        <Header />
+        <BartersPageStyled>
+          <BarterMenu linkActive={"trades"} />
+          <div className="barters">
+            <h3>Active Barters</h3>
+
+            {/* {false ? ( */}
+            {trades != null ? (
+              <div className="cont">
+                <h4>
+                  Trades which{" "}
+                  <span style={{ color: "#001" }}>waiting for action</span>
+                </h4>
+                <div>
+                  {trades
+                    .filter((barter) => barter.status === "waiting_action")
+                    .map((barter) => (
+                      <div
+                        style={{ backgroundColor: "#ffffff", width: "300px" }}
+                        key={barter.id}
+                      >
+                        <MyBarter
+                          key={barter._id}
+                          giveProductId={barter.giver.id}
+                        />
+                        <div className="swap">
+                          <img
+                            src={swapIcon}
+                            alt=""
+                            style={{ width: "40px" }}
+                          />
+                        </div>
+                        <SecondBarter
+                          key={barter._id}
+                          wantProductId={barter.receiver.id}
+                        />
+                        <Link to={`/trades/${barter._id}`}>
+                          <button>Barter info</button>
+                        </Link>
+                      </div>
+                    ))}
+                </div>
+                <br />
+                <br />
+                <br />
+
+                <h4>
+                  Trades which were{" "}
+                  <span style={{ color: "#001" }}>accepted</span>
+                </h4>
+                <div>
+                  {trades
+                    .filter((barter) => barter.status === "Confirmed")
+                    .map((barter) => (
+                      <div
+                        style={{ backgroundColor: "#ffffff", width: "300px" }}
+                        key={barter.id}
+                      >
+                        <MyBarter
+                          key={barter._id}
+                          giveProductId={barter.giver.id}
+                        />
+                        <div className="swap">
+                          <img
+                            src={swapIcon}
+                            alt=""
+                            style={{ width: "40px" }}
+                          />
+                        </div>
+                        <SecondBarter
+                          key={barter._id}
+                          wantProductId={barter.receiver.id}
+                        />
+                        <Link to={`/trades/${barter._id}`}>
+                          <button>Barter info</button>
+                        </Link>
+                      </div>
+                    ))}
+                </div>
+                <br />
+                <br />
+                <br />
+
+                <h4>
+                  Trades which were{" "}
+                  <span style={{ color: "#001" }}>declined</span>
+                </h4>
+                <div>
+                  {trades
+                    .filter((barter) => barter.status === "Cancelled")
+                    .map((barter) => (
+                      <div
+                        style={{ backgroundColor: "#ffffff", width: "300px" }}
+                        key={barter.id}
+                      >
+                        <MyBarter
+                          key={barter._id}
+                          giveProductId={barter.giver.id}
+                        />
+                        <div className="swap">
+                          <img
+                            src={swapIcon}
+                            alt=""
+                            style={{ width: "40px" }}
+                          />
+                        </div>
+                        <SecondBarter
+                          key={barter._id}
+                          wantProductId={barter.receiver.id}
+                        />
+                        <Link to={`/trades/${barter._id}`}>
+                          <button>Barter info</button>
+                        </Link>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ) : (
+              <div className="empty">
+                <img src={card} alt="" />
+                <p>You still haven't added an item to exchange.</p>
+              </div>
+            )}
+
+            {/* <div className="cont">
+              <div>
+                {tradesFromMe.map((barter) => (
+                  <div style={{ backgroundColor: "#ffffff" }}>
+                    <MyBarter key={barter.id} giveProductId={barter.id} />
+                    <button>Open</button>
+                    <div className="swap">
+                      <img src={swapIcon} alt="" style={{ width: "40px" }} />
+                    </div>
+                    <SecondBarter key={barter.id} wantProductId={barter.id} />
+                    <Link to={`/barters/${barter.id}`}>
+                      <button>Barter info</button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div> */}
+
+            {/* <div className="cont">
+              <div>
+                {tradesToMe.map((barter) => (
+                  <div style={{ backgroundColor: "#ffffff" }} key={barter.id}>
+                    <MyBarter key={barter.id} giveProductId={barter.id} />
+                    <button>Open</button>
+                    <div className="swap">
+                      <img src={swapIcon} alt="" style={{ width: "40px" }} />
+                    </div>
+                    <SecondBarter key={barter.id} wantProductId={barter.id} />
+                    <Link to={`/trade/${barter.id}`}>
+                      <button>Barter info</button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div> */}
+          </div>
+        </BartersPageStyled>
+      </div>
+    )
+  );
+}
+
+export default BartersPage;
